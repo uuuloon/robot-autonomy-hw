@@ -1,0 +1,130 @@
+\documentclass[10pt,letterpaper]{article}
+\usepackage[margin=0.28in]{geometry}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{amsmath}
+\pagestyle{empty}
+\setlength{\parindent}{0pt}
+
+\begin{document}
+{\Large\bfseries 16-662 Robot Autonomy Homework \#1\par}
+\noindent\hfill Name: Aaron Chou, Andrew ID: aaroncho
+\vspace{0.1in}
+
+\large \textbf{2 - PID Control}
+
+\begin{minipage}[t]{0.495\textwidth}
+  \includegraphics[width=\linewidth]{../../HW1/img/PID_static.png}
+  \captionof{figure}{Control with a Fixed Wall}
+  \label{fig:fixed-wall}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.495\textwidth}
+  \includegraphics[width=\linewidth]{../../HW1/img/PID_ocillating.png}
+  \captionof{figure}{Control with a Moving Wall}
+  \label{fig:moving-wall}
+\end{minipage}
+
+\vspace{0.1in}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.5\linewidth]{../../HW1/img/PID_max_amp.png}
+  \caption{Whiteboard near maximum amplitude}\par
+  \label{fig:max-amp}
+\end{figure}
+\vspace{0.1in}
+
+\vspace{0pt}\textbf{Differences in behavior between the force controller and the impedance controller}\par\vspace{0.03in}
+{\small The force controller directly commands the desired force, while the impedance controller
+ generates force from position and velocity errors. As shown in Figure~\ref{fig:fixed-wall}, 
+ the force controller overshoots and oscillates a few times before settling, while the 
+ impedance controller is steadier.\par}
+
+\vspace{0.09in}\textbf{Observation and analysis on how the robot behaves under this disturbance}\par\vspace{0.03in}
+{\small As shown in Figure~\ref{fig:moving-wall}, the force controller has several large transient spikes but 
+then returns near the target force. The impedance controller behaves like a spring-damper system: 
+it produces a higher force when the wall moves closer (such as in Figure~\ref{fig:max-amp}) and a lower force when the wall moves 
+farther away, and it also has an initial overshoot. This occurs because the impedance controller
+uses a virtual spring and damper, which allow it to respond compliantly to the disturbance.\par}
+
+\newpage
+\large \textbf{3 - Kinematics}
+
+\vspace{0.1in}
+\textbf{End-effector poses for \(q_1\), \(q_2\), and \(q_3\).}
+\begin{itemize}
+  \item \(q_1\) end-effector pose:\\
+  \hspace{0.1in} 
+  $$ \textbf{t} = \begin{bmatrix}
+    0.088 \\
+    0 \\
+    0.926
+  \end{bmatrix}
+  $$
+  $$ \textbf{R} = \begin{bmatrix}
+    1 & 0 & 0 \\
+    0 & -1 & 0 \\
+    0 & 0 & -1
+  \end{bmatrix}
+  $$
+  \item \(q_2\) end-effector pose:\\
+  \hspace{0.1in} 
+  $$ \textbf{t} = \begin{bmatrix}
+    0.157 \\
+    -0.103 \\
+    0.936
+  \end{bmatrix}
+  $$
+  $$ \textbf{R} = \begin{bmatrix}
+    0.649 & 0.759 & 0.052 \\
+    0.755 & -0.651 & 0.073 \\
+    0.089 & -0.008 & -0.996
+  \end{bmatrix}
+  $$
+  \item \(q_3\) end-effector pose:\\
+  \hspace{0.1in} 
+  $$ \textbf{t} = \begin{bmatrix}
+    0.401 \\
+    0.087 \\
+    0.855
+  \end{bmatrix}
+  $$
+  $$ \textbf{R} = \begin{bmatrix}
+    0.980 & -0.181 & -0.081 \\
+    -0.174 & -0.593 & -0.786 \\
+    0.095 & 0.785 & -0.612
+  \end{bmatrix}
+  $$
+\end{itemize}
+\textbf{IK joint angles for (\(R_g, t_g\))}
+\begin{itemize}
+  \item IK joint angles (rad):\\
+  $$ \textbf{q} = \begin{bmatrix}
+    0.180637 & 0.257370 & -0.209686 & -2.082814 & -0.032940 & 3.907053 & -3.064487
+    \end{bmatrix} 
+    $$
+\end{itemize}
+\textbf{Robot at the IK configuration}
+
+
+\begin{minipage}[t]{0.495\textwidth}
+  \includegraphics[width=\linewidth]{../../HW1/img/Kinematics_IK_pose.png}
+  \captionof{figure}{Franka arm with IK joint targets.}
+  \label{fig:org-gain}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.495\textwidth}
+  \includegraphics[width=\linewidth]{../../HW1/img/Kinematics_IK_pose_tuned.png}
+  \captionof{figure}{Same IK joint targets with tuned gains.}
+  \label{fig:new-gain}
+\end{minipage}
+
+\vspace{0.1in}
+With the original PD gains (\(K_p = 1000, K_d = 1000\)), some joints did not settle at their IK target angles because the actuator torques saturated (Figure~\ref{fig:org-gain}). After reducing the gains (\(K_p = 100, K_d = 20\)), the robot moved closer to the desired joint configuration (Figure~\ref{fig:new-gain}).
+
+% \begin{figure}[htbp]
+%   \centering
+%   \includegraphics[width=0.5\linewidth]{../../HW1/img/Kinematics_IK_pose.png}
+%   \caption{Franka arm at the joint configuration computed by the IK solver.}
+% \end{figure}
+
+\end{document}

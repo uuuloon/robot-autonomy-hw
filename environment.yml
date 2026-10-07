@@ -1,0 +1,20 @@
+# Environment for running the robot-autonomy-hw codebase (MuJoCo sims + plotting).
+#
+# Setup:
+#   conda env create -f environment.yml
+#   conda activate mujoco_env
+#
+# Note: if you have ROS sourced, its PYTHONPATH can shadow these packages.
+# Run `unset PYTHONPATH` in the shell before activating if imports misbehave.
+name: mujoco_env
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pip
+  - pip:
+      - mujoco==3.13.0
+      - numpy==2.2.6
+      - matplotlib==3.10.9
+      - pandas==2.3.3
+      - ipykernel==7.3.0

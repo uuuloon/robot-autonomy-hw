@@ -55,7 +55,8 @@ class FrankArm:
         self.J = np.zeros((6, 7))
 
         self.q = [0., 0., 0., 0., 0., 0., 0.]
-        self.ForwardKin([0., 0., 0., 0., 0., 0., 0.])
+        self.q2 = np.deg2rad([0, 0, -45, -15, 20, 15, -75])
+        self.q2 = np.deg2rad([0, 0, 30, -60, -65, 45, 0])
 
     def ForwardKin(self, ang):
         '''
@@ -66,6 +67,22 @@ class FrankArm:
         self.q[0:-1] = ang
 
         # Compute current joint and end effector coordinate frames (self.Tjoint). Remember that not all joints rotate about the z axis!
+        for i in range(7):
+            self.Tjoint[i] = rt.MatrixExp(self.axis[i], self.q[i])
+
+        self.Tjoint[7] = np.eye(4)
+
+        self.Tcurr[0] = self.Tlink[0] @ self.Tjoint[0]
+        for i in range(1, 8):
+            self.Tcurr[i] = self.Tcurr[i-1] @ self.Tlink[i] @ self.Tjoint[i]
+
+        p_ee = self.Tcurr[-1][:3, 3]
+        for i in range(7):
+            p_i = self.Tcurr[i][:3, 3]
+            z_i = self.Tcurr[i][:3, :3] @ np.asarray(self.axis[i])
+
+            self.J[:3, i] = np.cross(z_i, p_ee - p_i)
+            self.J[3:, i] = z_i
 
         return self.Tcurr, self.J
 
@@ -77,9 +94,33 @@ class FrankArm:
         Error in your IK solution compared to the desired target
         '''
 
-        W = np.eye(7)
-        C = np.eye(6)
+        q = np.asarray(ang, dtype=float).copy()
+        Tcurr, J = self.ForwardKin(q)
+        position_error = TGoal[:3, 3] - Tcurr[-1][:3, 3]
+        rotation_error = TGoal[:3, :3] @ Tcurr[-1][:3, :3].T
+        axis, ang = rt.R2axisang(rotation_error)
+        rotation_error = np.array(axis) * ang
+        Err = np.concatenate((position_error, rotation_error))
 
-        Err = 0
+
+        C = np.diag([1_000_000, 1_000_000, 1_000_000,
+             1_000, 1_000, 1_000])
+        W = np.diag([1, 1, 100, 100, 1, 1, 100])
+
+
+        count = 0
+        while (np.linalg.norm(position_error) > x_eps or np.linalg.norm(rotation_error) > r_eps):
+            if count >= 1000: break
+            A = J.T @ C @ J + W
+            b = J.T @ C @ Err
+            delta_q = np.linalg.solve(A, b)
+            q = q + delta_q
+            Tcurr, J = self.ForwardKin(q)
+            position_error = TGoal[:3, 3] - Tcurr[-1][:3, 3]
+            rotation_error = TGoal[:3, :3] @ Tcurr[-1][:3, :3].T
+            axis, ang = rt.R2axisang(rotation_error)
+            rotation_error = np.array(axis) * ang
+            Err = np.concatenate((position_error, rotation_error))
+            count += 1
 
         return self.q[0:-1], Err
